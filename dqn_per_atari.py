@@ -10,6 +10,9 @@ import numpy as np
 import wandb
 import argparse
 import copy
+import datetime
+import os
+from pathlib import Path
 
 env = space_invaders_v2.parallel_env(obs_type='ram')
 env = ss.frame_skip_v0(env, 4)
@@ -55,6 +58,7 @@ def get_args():
     parser.add_argument("--transfer-path", type=str, default="")
     parser.add_argument("--self-play-step", type=int, default=50000)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--log-path", type=str, default='')
     parser.add_argument("--episode", type=int, default=20)
     parser.add_argument("--wandb", action="store_true", default=False)
     parser.add_argument("--random-opponent", action="store_true", default=False)
@@ -70,27 +74,28 @@ if __name__ == "__main__":
     max_episodes = args.episode
 
 
-    if args.transfer_path == '' and args.self_play:
-        print("No transfer path in self-play mode, abort!")
-        exit()
-    transfer_path = args.transfer_path
+    if args.transfer_path != '':
+    #     print("No transfer path in self-play mode, abort!")
+    #     exit()
+        transfer_path = args.transfer_path
 
-    transfer_model = t.load(transfer_path)
-    transfer_model_modified = {}
-    transfer_model_copy = copy.deepcopy(transfer_model)
-    for key in transfer_model.keys():
-        if 'model' and 'fc' in key:
-            pre, middle, post = key.split('.')
-            transfer_model_modified[middle+"."+post] = transfer_model_copy.pop(key)
-    transfer_model_modified['fc3.weight'] = transfer_model_copy.pop('model.Q.0.weight')
-    transfer_model_modified['fc3.bias'] = transfer_model_copy.pop('model.Q.0.bias')
-    print("transferred bits: ", transfer_model_modified.keys())
+        transfer_model = t.load(transfer_path)
+        transfer_model_modified = {}
+        transfer_model_copy = copy.deepcopy(transfer_model)
+        for key in transfer_model.keys():
+            if 'model' and 'fc' in key:
+                pre, middle, post = key.split('.')
+                transfer_model_modified[middle+"."+post] = transfer_model_copy.pop(key)
+        transfer_model_modified['fc3.weight'] = transfer_model_copy.pop('model.Q.0.weight')
+        transfer_model_modified['fc3.bias'] = transfer_model_copy.pop('model.Q.0.bias')
+        print("transferred bits: ", transfer_model_modified.keys())
     if args.wandb:
         wandb.init(project="machin_transfer", entity="justkim42")
 
     q_net = QNet(observe_dim, action_num).double().to(args.device)
     q_net_t = QNet(observe_dim, action_num).double().to(args.device)
-    q_net.load_state_dict(transfer_model_modified)
+    if args.transfer_path != '':
+        q_net.load_state_dict(transfer_model_modified)
 
     opponent_q_net = QNet(observe_dim, action_num).double().to(args.device)
     opponent_q_net.eval()
@@ -170,8 +175,19 @@ if __name__ == "__main__":
             observations, infos = env.reset(seed=args.seed)
             state = t.tensor(observations['first_0'], dtype=t.float64)
             tmp_observations = []
-
-
+    now = datetime.datetime.now().strftime("%y%m%d-%H%M%S")
+    args.algo_name = "dqn_per"
+    log_name = os.path.join("spaceInvaders", args.algo_name, str(args.seed), now)
+    log_path = os.path.join('.', log_name)
+    Path(log_path).mkdir(parents=True, exist_ok=True) 
+    
+    t.save(dqn_per.qnet.state_dict(), os.path.join(log_path, "final_policy.pth"))
+    t.save(q_net.state_dict(), os.path.join(log_path, "final_policy.pth"))
+    t.save({
+            'epoch': max_episodes,
+            'model_state_dict': dqn_per.qnet.state_dict(),
+            'optimizer_state_dict': dqn_per.qnet_optim.state_dict(),
+            },  os.path.join(log_path, "checkpoint"))
 
 
 
