@@ -180,7 +180,6 @@ if __name__ == "__main__":
         wandb.log({"episode len": episode_len, "episode": episode})
         dqn_per.store_episode(tmp_observations)
         total_reward = 0
-        smoothed_total_reward = 0
         episode_len = 0
     
         observations, infos = env.reset(seed=args.seed)
