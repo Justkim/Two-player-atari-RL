@@ -82,7 +82,7 @@ if __name__ == "__main__":
     #     exit()
         transfer_path = args.transfer_path
 
-        transfer_model = t.load(transfer_path)
+        transfer_model = t.load(transfer_path, map_location=args.device)
         transfer_model_modified = {}
         transfer_model_copy = copy.deepcopy(transfer_model)
         for key in transfer_model.keys():
