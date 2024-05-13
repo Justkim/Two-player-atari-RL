@@ -28,6 +28,7 @@ action_num = 6
 max_steps = 200
 solved_reward = 190
 solved_repeat = 5
+save_step = 5000
 
 
 # model definition
@@ -102,7 +103,11 @@ if __name__ == "__main__":
     opponent_q_net = QNet(observe_dim, action_num, args.device, args.device).double().to(args.device)
     opponent_q_net.eval()
 
-
+    now = datetime.datetime.now().strftime("%y%m%d-%H%M%S")
+    args.algo_name = "dqn_per"
+    log_name = os.path.join("spaceInvaders", args.algo_name, str(args.seed), now)
+    log_path = os.path.join('.', log_name)
+    Path(log_path).mkdir(parents=True, exist_ok=True) 
     dqn_per = DQNPer(q_net, q_net_t, t.optim.Adam, nn.MSELoss(reduction="sum"), batch_size = 256)
 
     episode, step, reward_fulfilled = 0, 0, 0
@@ -116,6 +121,13 @@ if __name__ == "__main__":
     tmp_observations = []
 
     while episode < max_episodes:
+        if episode % save_step == 0:
+            t.save(q_net.state_dict(), os.path.join(log_path, "current_policy.pth"))
+            t.save({
+                    'epoch': episode,
+                    'model_state_dict': dqn_per.qnet.state_dict(),
+                    'optimizer_state_dict': dqn_per.qnet_optim.state_dict(),
+                    },  os.path.join(log_path, "checkpoint"))
         terminal = False
 
         while not terminal and episode_len < max_steps:
@@ -174,11 +186,7 @@ if __name__ == "__main__":
         observations, infos = env.reset(seed=args.seed)
         state = t.tensor(observations['first_0'], dtype=t.float64)
         tmp_observations = []
-    now = datetime.datetime.now().strftime("%y%m%d-%H%M%S")
-    args.algo_name = "dqn_per"
-    log_name = os.path.join("spaceInvaders", args.algo_name, str(args.seed), now)
-    log_path = os.path.join('.', log_name)
-    Path(log_path).mkdir(parents=True, exist_ok=True) 
+
     
     t.save(dqn_per.qnet.state_dict(), os.path.join(log_path, "final_policy.pth"))
     t.save(q_net.state_dict(), os.path.join(log_path, "final_policy.pth"))
