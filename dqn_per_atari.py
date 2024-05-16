@@ -99,6 +99,7 @@ if __name__ == "__main__":
     q_net_t = QNet(observe_dim, action_num, args.device, args.device).double().to(args.device)
     if args.transfer_path != '':
         q_net.load_state_dict(transfer_model_modified)
+        q_net_t.load_state_dict(transfer_model_modified)
 
     opponent_q_net = QNet(observe_dim, action_num, args.device, args.device).double().to(args.device)
     opponent_q_net.eval()
@@ -109,12 +110,12 @@ if __name__ == "__main__":
     log_path = os.path.join('.', log_name)
     Path(log_path).mkdir(parents=True, exist_ok=True) 
     dqn_per = DQNPer(q_net, q_net_t, t.optim.Adam, nn.MSELoss(reduction="sum"), batch_size = 256)
-
     episode, step, reward_fulfilled = 0, 0, 0
     smoothed_total_reward = 0
     total_step = 0
     episode_len = 0
     total_reward = 0
+    total_opponent_reward = 0
     terminal = False
     observations, infos = env.reset(seed=args.seed)
     state = t.tensor(observations['first_0'], dtype=t.float64)
@@ -150,7 +151,7 @@ if __name__ == "__main__":
                 observations, rewards, terminations, truncations, infos = env.step(actions)
                 total_step += 1
                 episode_len += 1
-                state = t.tensor(observations['second_0'], dtype=t.float64)
+                state = t.tensor(observations['first_0'], dtype=t.float64)
                 total_reward += rewards['first_0']
 
                 experience =  {
@@ -176,10 +177,12 @@ if __name__ == "__main__":
         smoothed_total_reward = smoothed_total_reward * 0.9 + total_reward * 0.1
         logger.info(f"Episode {episode} smoothed total reward={smoothed_total_reward:.2f}")
         wandb.log({"total_reward": total_reward, "episode": episode})
+        wandb.log({"total_opponent_reward": total_opponent_reward, "episode": episode})
         wandb.log({"total_smoothed_reward": smoothed_total_reward, "episode": episode})
         wandb.log({"episode len": episode_len, "episode": episode})
         dqn_per.store_episode(tmp_observations)
         total_reward = 0
+        total_opponent_reward = 0
         episode_len = 0
     
         observations, infos = env.reset(seed=args.seed)
