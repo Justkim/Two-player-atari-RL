@@ -4,7 +4,7 @@ from machin.utils.logging import default_logger as logger
 import torch as t
 import torch.nn as nn
 import gym
-from pettingzoo.atari import space_invaders_v2
+from pettingzoo.atari import space_invaders_v2, pong_v3
 import supersuit as ss
 import numpy as np
 import wandb
@@ -13,8 +13,27 @@ import copy
 import datetime
 import os
 from pathlib import Path
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--task", type=str, default="space_invaders_v2")
+    parser.add_argument("--device", type=str, default="cpu")
+    parser.add_argument("--transfer-path", type=str, default="")
+    parser.add_argument("--self-play-step", type=int, default=50000)
+    parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--log-path", type=str, default='')
+    parser.add_argument("--episode", type=int, default=20)
+    parser.add_argument("--wandb", action="store_true", default=False)
+    parser.add_argument("--random-opponent", action="store_true", default=False)
+    parser.add_argument("--self-play", action="store_true", default=False)
+    return parser.parse_args()
 
-env = space_invaders_v2.parallel_env(obs_type='ram')
+args = get_args()
+
+if args.task == "pong":
+    env = pong_v3.parallel_env(obs_type='ram')
+else:
+    env = space_invaders_v2.parallel_env(obs_type='ram')
+
 env = ss.frame_skip_v0(env, 4)
 # # repeat_action_probability is set to 0.25 to introduce non-determinism to the system
 env = ss.sticky_actions_v0(env, repeat_action_probability=0.25)
@@ -54,19 +73,7 @@ def change_agent(obs_input):
     obs[29] = obs_input[28]
     obs[28] = temp
     return obs
-def get_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--task", type=str, default="space_invaders_v2")
-    parser.add_argument("--device", type=str, default="cpu")
-    parser.add_argument("--transfer-path", type=str, default="")
-    parser.add_argument("--self-play-step", type=int, default=50000)
-    parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--log-path", type=str, default='')
-    parser.add_argument("--episode", type=int, default=20)
-    parser.add_argument("--wandb", action="store_true", default=False)
-    parser.add_argument("--random-opponent", action="store_true", default=False)
-    parser.add_argument("--self-play", action="store_true", default=False)
-    return parser.parse_args()
+
 
 if __name__ == "__main__":
     args = get_args()
