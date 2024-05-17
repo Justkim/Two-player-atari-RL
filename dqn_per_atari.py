@@ -28,12 +28,16 @@ def get_args():
     return parser.parse_args()
 
 def log_args():
-    logger.info("Task: {}")
-    logger.info("Device: {}")
-    logger.info("Transfer_path: {}")
-    logger.info("Self-play-step: {}")
-    logger.info("seed: {}")
-    logger.info("log-path: {}")
+    logger.info("task: {args.task}")
+    logger.info("device: {args.device}")
+    logger.info("transfer_path: {args.transfer_path}")
+    logger.info("self-play-step: {args.self_play_step}")
+    logger.info("seed: {args.seed}")
+    logger.info("log-path: {args.log_path}")
+    logger.info("episode: {args.episode}")
+    logger.info("wandb: {args.wandb}")
+    logger.info("random-opponent: {args.random_opponent}")
+    logger.info("self-play: {args.self_play}")
 
 
 args = get_args()
@@ -194,7 +198,7 @@ if __name__ == "__main__":
             for _ in range(episode_len):
                 dqn_per.update()
         # show reward
-        logger.info(f"Episode {episode} reward={total_reward:.2f}")
+        #logger.info(f"Episode {episode} reward={total_reward:.2f}")
         wandb.log({"total_reward": total_reward, "action": action1_cpu, "episode": episode})
         wandb.log({"total_opponent_reward": total_opponent_reward, "opponent_action": action2, "episode": episode})
         wandb.log({"episode len": episode_len, "episode": episode})
