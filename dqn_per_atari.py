@@ -27,6 +27,15 @@ def get_args():
     parser.add_argument("--self-play", action="store_true", default=False)
     return parser.parse_args()
 
+def log_args():
+    logger.info("Task: {}")
+    logger.info("Device: {}")
+    logger.info("Transfer_path: {}")
+    logger.info("Self-play-step: {}")
+    logger.info("seed: {}")
+    logger.info("log-path: {}")
+
+
 args = get_args()
 
 if args.task == "pong":
@@ -40,7 +49,6 @@ env = ss.sticky_actions_v0(env, repeat_action_probability=0.25)
 env = ss.dtype_v0(env, np.dtype("float64"))
 env = ss.normalize_obs_v0(env)
 env = ss.clip_reward_v0(env)
-
 # configurations
 observe_dim = 128
 action_num = 6
@@ -48,6 +56,8 @@ max_steps = 200
 solved_reward = 190
 solved_repeat = 5
 save_step = 5000
+
+
 
 
 # model definition
@@ -77,6 +87,7 @@ def change_agent(obs_input):
 
 if __name__ == "__main__":
     args = get_args()
+    log_args()
     # setting the seed for both numpy and torch
     np.random.seed(args.seed)
     t.manual_seed(args.seed)
