@@ -87,6 +87,7 @@ if __name__ == "__main__":
     if args.transfer_path != '':
     #     print("No transfer path in self-play mode, abort!")
     #     exit()
+        
         transfer_path = args.transfer_path
 
         transfer_model = t.load(transfer_path, map_location=args.device)
@@ -107,6 +108,7 @@ if __name__ == "__main__":
     if args.transfer_path != '':
         q_net.load_state_dict(transfer_model_modified)
         q_net_t.load_state_dict(transfer_model_modified)
+        logger.info("Transfer done")
 
     opponent_q_net = QNet(observe_dim, action_num, args.device, args.device).double().to(args.device)
     opponent_q_net.eval()
