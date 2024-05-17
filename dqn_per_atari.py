@@ -28,16 +28,16 @@ def get_args():
     return parser.parse_args()
 
 def log_args():
-    logger.info("task: {args.task}")
-    logger.info("device: {args.device}")
-    logger.info("transfer_path: {args.transfer_path}")
-    logger.info("self-play-step: {args.self_play_step}")
-    logger.info("seed: {args.seed}")
-    logger.info("log-path: {args.log_path}")
-    logger.info("episode: {args.episode}")
-    logger.info("wandb: {args.wandb}")
-    logger.info("random-opponent: {args.random_opponent}")
-    logger.info("self-play: {args.self_play}")
+    logger.info("task: {}".format(args.task))
+    logger.info("device: {}".format(args.device))
+    logger.info("transfer_path: {}".format(args.transfer_path))
+    logger.info("self-play-step: {}".format(args.self_play_step))
+    logger.info("seed: {}".format(args.seed))
+    logger.info("log-path: {}".format(args.log_path))
+    logger.info("episode: {}".format(args.episode))
+    logger.info("wandb: {}".format(args.wandb))
+    logger.info("random-opponent: {}".format(args.random_opponent))
+    logger.info("self-play: {}".format(args.self_play))
 
 
 args = get_args()
