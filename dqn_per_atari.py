@@ -10,6 +10,7 @@ import numpy as np
 import wandb
 import argparse
 import copy
+from numpy import random
 import datetime
 import os
 from pathlib import Path
@@ -25,6 +26,8 @@ def get_args():
     parser.add_argument("--wandb", action="store_true", default=False)
     parser.add_argument("--random-opponent", action="store_true", default=False)
     parser.add_argument("--self-play", action="store_true", default=False)
+    parser.add_argument("--epsilon", type=float, default=0.9999)
+    parser.add_argument("--opponent-randomness", type=float, default=0.05)
     return parser.parse_args()
 
 def log_args():
@@ -38,6 +41,8 @@ def log_args():
     logger.info("wandb: {}".format(args.wandb))
     logger.info("random-opponent: {}".format(args.random_opponent))
     logger.info("self-play: {}".format(args.self_play))
+    logger.info("epsilon: {}".format(args.epsilon))
+    logger.info("opponent-randomness: {}".format(args.opponent_randomness))
 
 
 args = get_args()
@@ -133,7 +138,7 @@ if __name__ == "__main__":
     log_name = os.path.join("spaceInvaders", args.algo_name, str(args.seed), now)
     log_path = os.path.join('.', log_name)
     Path(log_path).mkdir(parents=True, exist_ok=True) 
-    dqn_per = DQNPer(q_net, q_net_t, t.optim.Adam, nn.MSELoss(reduction="sum"), batch_size = 256)
+    dqn_per = DQNPer(q_net, q_net_t, t.optim.Adam, nn.MSELoss(reduction="sum"), batch_size = 256, epsilon_decay=args.epsilon)
     episode, step, reward_fulfilled = 0, 0, 0
     total_step = 0
     episode_len = 0
@@ -168,7 +173,12 @@ if __name__ == "__main__":
                     action2 = env.action_space('second_0').sample()
                 elif args.self_play:
                     opponent_observation = t.tensor(change_agent(observations['second_0']), dtype=t.float64).to(args.device)
-                    action2 = int(opponent_q_net.forward(opponent_observation).argmax().cpu())
+                    random_number = np.random.rand()
+                    if random_number > args.opponent_randomness:
+                        action2 = int(opponent_q_net.forward(opponent_observation).argmax().cpu())
+                    else:
+                        random_number = random.randint(0, action_num)
+                        action2 = random_number
                 actions = {'first_0':action1_cpu, 'second_0':action2}
                 # take an step
                 observations, rewards, terminations, truncations, infos = env.step(actions)
