@@ -4,7 +4,7 @@ from machin.utils.logging import default_logger as logger
 import torch as t
 import torch.nn as nn
 import gym
-from pettingzoo.atari import space_invaders_v2, pong_v3
+from pettingzoo.atari import space_invaders_v2, pong_v3, boxing_v2
 import supersuit as ss
 import numpy as np
 import wandb
@@ -50,8 +50,10 @@ args = get_args()
 
 if args.task == "pong":
     env = pong_v3.parallel_env(obs_type='ram')
-else:
+elif task == "space_invaders":
     env = space_invaders_v2.parallel_env(obs_type='ram')
+elif task == "boxing":
+    env = boxing_v2.parallel_env(obs_type='ram')
 
 env = ss.frame_skip_v0(env, 4)
 # # repeat_action_probability is set to 0.25 to introduce non-determinism to the system
@@ -105,7 +107,24 @@ def change_agent(obs_input):
         obs[46] = obs_input[45]
         obs[45] = temp
 
+        temp = obs_input[14]
+        obs[14] = obs_input[13]
+        obs[13] = temp
 
+    elif args.task == "boxing":
+
+        obs = np.copy(obs_input)
+        temp = obs_input[33]
+        obs[33] = obs_input[32]
+        obs[32] = temp
+
+        temp = obs_input[35]
+        obs[35] = obs_input[34]
+        obs[34] = temp
+
+        temp = obs_input[19]
+        obs[19] = obs_input[18]
+        obs[18] = temp
         return obs
 
 
