@@ -16,7 +16,7 @@ import os
 from pathlib import Path
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--task", type=str, default="space_invaders_v2")
+    parser.add_argument("--task", type=str, default="space_invaders")
     parser.add_argument("--device", type=str, default="cpu")
     parser.add_argument("--transfer-path", type=str, default="")
     parser.add_argument("--self-play-step", type=int, default=50000)
@@ -88,11 +88,26 @@ class QNet(nn.Module):
         return self.fc3(a)
 
 def change_agent(obs_input):
-    obs = np.copy(obs_input)
-    temp = obs_input[29]
-    obs[29] = obs_input[28]
-    obs[28] = temp
-    return obs
+    if args.task == "space_invaders":
+        obs = np.copy(obs_input)
+        temp = obs_input[29]
+        obs[29] = obs_input[28]
+        obs[28] = temp
+        return obs
+    elif args.task == "pong":
+
+        obs = np.copy(obs_input)
+        temp = obs_input[51]
+        obs[51] = obs_input[50]
+        obs[50] = temp
+
+        temp = obs_input[46]
+        obs[46] = obs_input[45]
+        obs[45] = temp
+
+
+        return obs
+
 
 
 if __name__ == "__main__":
