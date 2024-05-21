@@ -50,9 +50,9 @@ args = get_args()
 
 if args.task == "pong":
     env = pong_v3.parallel_env(obs_type='ram')
-elif task == "space_invaders":
+elif args.task == "space_invaders":
     env = space_invaders_v2.parallel_env(obs_type='ram')
-elif task == "boxing":
+elif args.task == "boxing":
     env = boxing_v2.parallel_env(obs_type='ram')
 
 env = ss.frame_skip_v0(env, 4)
@@ -90,15 +90,13 @@ class QNet(nn.Module):
         return self.fc3(a)
 
 def change_agent(obs_input):
+    obs = np.copy(obs_input)
     if args.task == "space_invaders":
-        obs = np.copy(obs_input)
         temp = obs_input[29]
         obs[29] = obs_input[28]
         obs[28] = temp
-        return obs
-    elif args.task == "pong":
 
-        obs = np.copy(obs_input)
+    elif args.task == "pong":
         temp = obs_input[51]
         obs[51] = obs_input[50]
         obs[50] = temp
@@ -112,8 +110,6 @@ def change_agent(obs_input):
         obs[13] = temp
 
     elif args.task == "boxing":
-
-        obs = np.copy(obs_input)
         temp = obs_input[33]
         obs[33] = obs_input[32]
         obs[32] = temp
@@ -125,7 +121,7 @@ def change_agent(obs_input):
         temp = obs_input[19]
         obs[19] = obs_input[18]
         obs[18] = temp
-        return obs
+    return obs
 
 
 
