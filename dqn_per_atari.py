@@ -23,6 +23,7 @@ def get_args():
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--log-path", type=str, default='')
     parser.add_argument("--episode", type=int, default=20)
+    parser.add_argument("--clip-rewards", action="store_true", default=False)
     parser.add_argument("--wandb", action="store_true", default=False)
     parser.add_argument("--random-opponent", action="store_true", default=False)
     parser.add_argument("--self-play", action="store_true", default=False)
@@ -44,6 +45,7 @@ def log_args():
     logger.info("self-play: {}".format(args.self_play))
     logger.info("epsilon: {}".format(args.epsilon))
     logger.info("opponent-randomness: {}".format(args.opponent_randomness))
+    logger.info("clip-rewards: {}".format(args.clip_rewards))
 
 
 args = get_args()
@@ -60,7 +62,8 @@ env = ss.frame_skip_v0(env, 4)
 env = ss.sticky_actions_v0(env, repeat_action_probability=0.25)
 env = ss.dtype_v0(env, np.dtype("float64"))
 env = ss.normalize_obs_v0(env)
-env = ss.clip_reward_v0(env)
+if args.clip_rewards:
+    env = ss.clip_reward_v0(env)
 # configurations
 observe_dim = 128
 action_num = 6
@@ -128,6 +131,8 @@ def change_agent(obs_input):
 if __name__ == "__main__":
     args = get_args()
     log_args()
+    now = datetime.datetime.now().strftime("%y%m%d-%H%M%S")
+    log_name = os.path.join(args.task, 'dqn_per', str(args.seed), now)
     # setting the seed for both numpy and torch
     np.random.seed(args.seed)
     t.manual_seed(args.seed)
@@ -152,7 +157,8 @@ if __name__ == "__main__":
         transfer_model_modified['fc3.bias'] = transfer_model_copy.pop('model.Q.0.bias')
         print("transferred bits: ", transfer_model_modified.keys())
     if args.wandb:
-        wandb.init(project="machin_transfer", entity="justkim42")
+        wandb_name = log_name.replace('/', '-')
+        wandb.init(project="machin_transfer", entity="justkim42", name=wandb_name)
 
     q_net = QNet(observe_dim, action_num, args.device, args.device).double().to(args.device)
     q_net_t = QNet(observe_dim, action_num, args.device, args.device).double().to(args.device)
@@ -165,8 +171,6 @@ if __name__ == "__main__":
     opponent_q_net.eval()
 
     now = datetime.datetime.now().strftime("%y%m%d-%H%M%S")
-    args.algo_name = "dqn_per"
-    log_name = os.path.join("spaceInvaders", args.algo_name, str(args.seed), now)
     log_path = os.path.join('.', log_name)
     Path(log_path).mkdir(parents=True, exist_ok=True) 
     dqn_per = DQNPer(q_net, q_net_t, t.optim.Adam, nn.MSELoss(reduction="sum"), batch_size = args.batch_size, epsilon_decay=args.epsilon)
