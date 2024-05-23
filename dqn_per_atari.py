@@ -30,6 +30,7 @@ def get_args():
     parser.add_argument("--epsilon", type=float, default=0.99999)
     parser.add_argument("--opponent-randomness", type=float, default=0.05)
     parser.add_argument("--batch-size", type=int, default=256)
+    parser.add_argument("--transfer", action="store_true", default=False)
     return parser.parse_args()
 
 def log_args():
@@ -39,6 +40,7 @@ def log_args():
     logger.info("self-play-step: {}".format(args.self_play_step))
     logger.info("seed: {}".format(args.seed))
     logger.info("log-path: {}".format(args.log_path))
+    logger.info("transfer: {}".format(args.transfer))
     logger.info("episode: {}".format(args.episode))
     logger.info("wandb: {}".format(args.wandb))
     logger.info("random-opponent: {}".format(args.random_opponent))
@@ -130,7 +132,9 @@ def change_agent(obs_input):
 
 if __name__ == "__main__":
     args = get_args()
+    wandb_config = args.__dict__
     log_args()
+
     now = datetime.datetime.now().strftime("%y%m%d-%H%M%S")
     log_name = os.path.join(args.task, 'dqn_per', str(args.seed), now)
     # setting the seed for both numpy and torch
@@ -138,6 +142,7 @@ if __name__ == "__main__":
     t.manual_seed(args.seed)
 
     max_episodes = args.episode
+    sample_log_step = max_episodes / 10
 
 
     if args.transfer_path != '':
@@ -158,7 +163,7 @@ if __name__ == "__main__":
         print("transferred bits: ", transfer_model_modified.keys())
     if args.wandb:
         wandb_name = log_name.replace('/', '-')
-        wandb.init(project="machin_transfer", entity="justkim42", name=wandb_name)
+        wandb.init(project="machin_transfer", entity="justkim42", name=wandb_name, config=wandb_config)
 
     q_net = QNet(observe_dim, action_num, args.device, args.device).double().to(args.device)
     q_net_t = QNet(observe_dim, action_num, args.device, args.device).double().to(args.device)
@@ -237,7 +242,6 @@ if __name__ == "__main__":
                 wandb.log({"opponent reward": rewards['second_0'], "timestep": total_step})
             terminal = terminations['first_0'] or truncations['first_0']
         #Things that should happen at the end of the episode
-        episode += 1
                 # update, update more if episode is longer, else less
         if episode > 20:
             for _ in range(episode_len):
@@ -247,6 +251,10 @@ if __name__ == "__main__":
         wandb.log({"total_reward": total_reward, "action": action1_cpu, "episode": episode})
         wandb.log({"total_opponent_reward": total_opponent_reward, "opponent_action": action2, "episode": episode})
         wandb.log({"episode len": episode_len, "episode": episode})
+        if sample_log_step > 1:
+            if episode % sample_log_step == 0:
+                wandb.log({"total_sampled_reward": total_reward,"episode": episode})
+                wandb.log({"total_sampled_opponent_reward": total_opponent_reward, "episode": episode})
         dqn_per.store_episode(tmp_observations)
         total_reward = 0
         total_opponent_reward = 0
@@ -255,6 +263,7 @@ if __name__ == "__main__":
         observations, infos = env.reset(seed=args.seed)
         state = t.tensor(observations['first_0'], dtype=t.float64)
         tmp_observations = []
+        episode += 1
 
     
     t.save(dqn_per.qnet.state_dict(), os.path.join(log_path, "final_policy.pth"))
