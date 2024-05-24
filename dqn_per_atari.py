@@ -115,6 +115,14 @@ def change_agent(obs_input):
         obs[29] = obs_input[28]
         obs[28] = temp
 
+        temp = obs_input[105]
+        obs[105] = obs_input[104]
+        obs[104] = temp
+
+        temp = obs_input[74]
+        obs[74] = obs_input[73]
+        obs[73] = temp
+
     elif args.task == "pong":
         temp = obs_input[51]
         obs[51] = obs_input[50]
