@@ -149,7 +149,7 @@ if __name__ == "__main__":
     t.manual_seed(args.seed)
 
     max_episodes = args.episode
-    sample_log_step = max_episodes / 10
+    sample_log_step = max_episodes / 10000
 
 
     if args.transfer_path != '':
