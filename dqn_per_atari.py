@@ -1,6 +1,7 @@
 #Parts of this example are from: https://github.com/iffiX/machin/blob/master/examples/framework_examples/dqn_per.py
 from machin.frame.algorithms import DQNPer
 from machin.utils.logging import default_logger as logger
+from pathlib import Path
 import torch as t
 import torch.nn as nn
 import gym
@@ -32,6 +33,7 @@ def get_args():
     parser.add_argument("--batch-size", type=int, default=256)
     parser.add_argument("--transfer", action="store_true", default=False)
     parser.add_argument("--freeze-first-layer", action="store_true", default=False)
+    parser.add_argument("--freeze-two-layer", action="store_true", default=False)
     return parser.parse_args()
 
 def log_args():
@@ -50,6 +52,7 @@ def log_args():
     logger.info("opponent-randomness: {}".format(args.opponent_randomness))
     logger.info("clip-rewards: {}".format(args.clip_rewards))
     logger.info("freeze-first-layer: {}".format(args.freeze_first_layer))
+    logger.info("freeze-two-layer: {}".format(args.freeze_two_layer))
 
 
 args = get_args()
@@ -100,6 +103,10 @@ class QNet(nn.Module):
         for param in self.fc1.parameters():
                 param.requires_grad = False
         logger.info("Layer fc1 is frozen now.")
+    def freeze_second_layer(self):
+        for param in self.fc2.parameters():
+                param.requires_grad = False
+        logger.info("Layer fc2 is frozen now.")
 
 def change_agent(obs_input):
     obs = np.copy(obs_input)
@@ -170,13 +177,21 @@ if __name__ == "__main__":
         print("transferred bits: ", transfer_model_modified.keys())
     if args.wandb:
         wandb_name = log_name.replace('/', '-')
-        wandb.init(project="machin_transfer", entity="justkim42", name=wandb_name, config=wandb_config)
+        wandb.init(project="machin_transfer", entity="justkim42", name=wandb_name, config=wandb_config,     settings=wandb.Settings(
+        log_internal=str(Path(__file__).parent / 'wandb' / 'null'),
+    ))
 
     q_net = QNet(observe_dim, action_num, args.device, args.device).double().to(args.device)
     q_net_t = QNet(observe_dim, action_num, args.device, args.device).double().to(args.device)
-    if args.freeze_first_layer:
+    if args.freeze_two_layer:
         q_net.freeze_first_layer()
         q_net_t.freeze_first_layer()
+        q_net.freeze_second_layer()
+        q_net_t.freeze_second_layer()
+    elif args.freeze_first_layer:
+        q_net.freeze_first_layer()
+        q_net_t.freeze_first_layer()
+
     if args.transfer_path != '':
         q_net.load_state_dict(transfer_model_modified)
         q_net_t.load_state_dict(transfer_model_modified)
