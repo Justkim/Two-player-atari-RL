@@ -73,7 +73,8 @@ if args.clip_rewards:
     env = ss.clip_reward_v0(env)
 # configurations
 observe_dim = 128
-action_num = 6
+action_num = env.action_space('first_0').n
+logger.info("action_num: {}".format(action_num))
 max_steps = 200
 solved_reward = 190
 solved_repeat = 5
