@@ -180,7 +180,6 @@ if __name__ == "__main__":
     max_episodes = args.episode
     sample_log_step = max_episodes / 10000
 
-
     loaded_tuple = ()
     hash_index = None
     if args.count_based_exploration:
@@ -314,10 +313,10 @@ if __name__ == "__main__":
         wandb.log({"total_reward": total_reward, "action": action1_cpu, "episode": episode})
         wandb.log({"total_opponent_reward": total_opponent_reward, "opponent_action": action2, "episode": episode})
         wandb.log({"episode len": episode_len, "episode": episode})
-        if sample_log_step > 1:
-            if episode % sample_log_step == 0:
-                wandb.log({"total_sampled_reward": total_reward,"episode": episode})
-                wandb.log({"total_sampled_opponent_reward": total_opponent_reward, "episode": episode})
+        # if sample_log_step > 1:
+        #     if episode % sample_log_step == 0:
+        #         wandb.log({"total_sampled_reward": total_reward,"episode": episode})
+        #         wandb.log({"total_sampled_opponent_reward": total_opponent_reward, "episode": episode})
         dqn_per.store_episode(tmp_observations)
         total_reward = 0
         total_opponent_reward = 0
