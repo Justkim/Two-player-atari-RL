@@ -280,10 +280,11 @@ if __name__ == "__main__":
                     if random_number > args.opponent_randomness:
                         action2 = int(opponent_q_net.forward(opponent_observation).argmax().cpu())
                     else:
-                        random_number = random.randint(0, action_num)
+                        random_number = random.randint(0, action_num-1)
                         action2 = random_number
                 actions = {'first_0':action1_cpu, 'second_0':action2}
                 # take an step
+                print(actions)
                 observations, rewards, terminations, truncations, infos = env.step(actions)
                 total_step += 1
                 episode_len += 1
