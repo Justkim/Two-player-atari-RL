@@ -163,7 +163,7 @@ def change_agent(obs_input):
 
 
 if __name__ == "__main__":
-    if self.count_based_exploration:
+    if args.count_based_exploration:
         logging.disable(logging.CRITICAL)
     args = get_args()
     wandb_config = args.__dict__
