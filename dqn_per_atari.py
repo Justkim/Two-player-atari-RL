@@ -15,6 +15,7 @@ import copy
 from numpy import random
 import datetime
 import os
+import random
 from pathlib import Path
 import pickle
 from simhash import SimhashIndex
@@ -176,6 +177,7 @@ if __name__ == "__main__":
     # setting the seed for both numpy and torch
     np.random.seed(args.seed)
     t.manual_seed(args.seed)
+    random.seed(args.seed)
 
     max_episodes = args.episode
     sample_log_step = max_episodes / 10000
