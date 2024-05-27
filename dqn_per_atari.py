@@ -33,7 +33,7 @@ def get_args():
     parser.add_argument("--wandb", action="store_true", default=False)
     parser.add_argument("--random-opponent", action="store_true", default=False)
     parser.add_argument("--self-play", action="store_true", default=False)
-    parser.add_argument("--epsilon", type=float, default=0.99999)
+    parser.add_argument("--epsilon", type=float, default=9999985)
     parser.add_argument("--opponent-randomness", type=float, default=0.05)
     parser.add_argument("--batch-size", type=int, default=256)
     parser.add_argument("--transfer", action="store_true", default=False)
@@ -162,13 +162,17 @@ def change_agent(obs_input):
 
 
 if __name__ == "__main__":
-    logging.disable(logging.CRITICAL)
+    if self.count_based_exploration:
+        logging.disable(logging.CRITICAL)
     args = get_args()
     wandb_config = args.__dict__
     log_args()
 
     now = datetime.datetime.now().strftime("%y%m%d-%H%M%S")
-    log_name = os.path.join(args.task, 'dqn_per', str(args.seed), now)
+    if args.transfer:
+        log_name = os.path.join(args.task, 'dqn_per', 'transfer', str(args.seed), now)
+    else:
+        log_name = os.path.join(args.task, 'dqn_per', str(args.seed), now)
     # setting the seed for both numpy and torch
     np.random.seed(args.seed)
     t.manual_seed(args.seed)
