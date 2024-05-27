@@ -284,7 +284,6 @@ if __name__ == "__main__":
                         action2 = random_number
                 actions = {'first_0':action1_cpu, 'second_0':action2}
                 # take an step
-                print(actions)
                 observations, rewards, terminations, truncations, infos = env.step(actions)
                 total_step += 1
                 episode_len += 1
