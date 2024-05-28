@@ -34,7 +34,7 @@ def get_args():
     parser.add_argument("--wandb", action="store_true", default=False)
     parser.add_argument("--random-opponent", action="store_true", default=False)
     parser.add_argument("--self-play", action="store_true", default=False)
-    parser.add_argument("--epsilon", type=float, default=9999985)
+    parser.add_argument("--epsilon", type=float, default=0.9999985)
     parser.add_argument("--opponent-randomness", type=float, default=0.05)
     parser.add_argument("--batch-size", type=int, default=256)
     parser.add_argument("--transfer", action="store_true", default=False)
