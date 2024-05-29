@@ -300,8 +300,9 @@ if __name__ == "__main__":
                 tmp_observations.append(
                     experience
                 )
-                wandb.log({"agent reward": rewards['first_0'], "timestep": total_step})
-                wandb.log({"opponent reward": rewards['second_0'], "timestep": total_step})
+                if args.wandb:
+                    wandb.log({"agent reward": rewards['first_0'], "timestep": total_step})
+                    wandb.log({"opponent reward": rewards['second_0'], "timestep": total_step})
             terminal = terminations['first_0'] or truncations['first_0']
         #Things that should happen at the end of the episode
                 # update, update more if episode is longer, else less
@@ -310,9 +311,10 @@ if __name__ == "__main__":
                 dqn_per.update()
         # show reward
         #logger.info(f"Episode {episode} reward={total_reward:.2f}")
-        wandb.log({"total_reward": total_reward, "action": action1_cpu, "episode": episode})
-        wandb.log({"total_opponent_reward": total_opponent_reward, "opponent_action": action2, "episode": episode})
-        wandb.log({"episode len": episode_len, "episode": episode})
+        if args.wandb:
+            wandb.log({"total_reward": total_reward, "action": action1_cpu, "episode": episode})
+            wandb.log({"total_opponent_reward": total_opponent_reward, "opponent_action": action2, "episode": episode})
+            wandb.log({"episode len": episode_len, "episode": episode})
         # if sample_log_step > 1:
         #     if episode % sample_log_step == 0:
         #         wandb.log({"total_sampled_reward": total_reward,"episode": episode})
