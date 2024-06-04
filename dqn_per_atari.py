@@ -22,7 +22,6 @@ from simhash import SimhashIndex
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--task", type=str, default="space_invaders")
-    parser.add_argument("--count-based-exploration", action="store_true", default=False)
     parser.add_argument("--device", type=str, default="cpu")
     parser.add_argument("--transfer-path", type=str, default="")
     parser.add_argument("--self-play-step", type=int, default=50000)
@@ -39,7 +38,6 @@ def get_args():
     parser.add_argument("--transfer", action="store_true", default=False)
     parser.add_argument("--freeze-first-layer", action="store_true", default=False)
     parser.add_argument("--freeze-two-layer", action="store_true", default=False)
-    parser.add_argument("--exploration_dataset_path", type=str, default="")
     return parser.parse_args()
 
 def log_args():
@@ -59,8 +57,6 @@ def log_args():
     logger.info("clip-rewards: {}".format(args.clip_rewards))
     logger.info("freeze-first-layer: {}".format(args.freeze_first_layer))
     logger.info("freeze-two-layer: {}".format(args.freeze_two_layer))
-    logger.info("count-based-exploration: {}".format(args.count_based_exploration))
-    logger.info("exploration_dataset_path: {}".format(args.exploration_dataset_path))
 
 
 args = get_args()
@@ -205,17 +201,7 @@ if __name__ == "__main__":
     if args.random_opponent and args.self_play:
        logger.error("The opponent mode is not provided correctly (self-play or random?)")
        exit()
-    
-    loaded_tuple = ()
-    hash_index = None
-    if args.count_based_exploration:
-        if args.exploration_dataset_path != '':
-            with open(args.exploration_dataset_path , 'rb') as f:
-                loaded_tuple = pickle.load(f)
-        else:
-            logger.error("You chose to use count based exploration but didn't provide a path for the hash dataset.")
-            exit()
-        hash_index = SimhashIndex(loaded_tuple, k=1)
+
     if args.transfer:
         if args.transfer_path != '':            
             transfer_path = args.transfer_path
@@ -298,12 +284,8 @@ if __name__ == "__main__":
                 opponent_q_net.load_state_dict(q_net.state_dict())
             with t.no_grad():
                 old_state = state
-                old_observation = observation
                 # agent model inference
-                if not args.count_based_exploration:
-                    action1 = dqn_per.act_discrete_with_noise({"state": old_state.view(1, observe_dim)})
-                else:
-                    action1 = dqn_per.act_discrete_with_noise_count_based_exploration(old_observation, hash_index, {"state": old_state.view(1, observe_dim)})
+                action1 = dqn_per.act_discrete_with_noise({"state": old_state.view(1, observe_dim)})
                 action1_cpu = action1.cpu().numpy()[0][0]
                 if args.random_opponent:
                     action2 = env.action_space('second_0').sample()
@@ -321,7 +303,6 @@ if __name__ == "__main__":
                 total_step += 1
                 episode_len += 1
                 state = t.tensor(observations['first_0'], dtype=t.float64)
-                observation = observations['first_0']
                 total_reward += rewards['first_0']
                 total_opponent_reward += rewards['second_0']
 
@@ -359,7 +340,6 @@ if __name__ == "__main__":
     
         observations, infos = env.reset(seed=args.seed)
         state = t.tensor(observations['first_0'], dtype=t.float64)
-        observation = observations['first_0']
         tmp_observations = []
         episode += 1
 
