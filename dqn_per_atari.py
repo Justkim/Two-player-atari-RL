@@ -6,13 +6,12 @@ from pathlib import Path
 import torch as t
 import torch.nn as nn
 import gym
-from pettingzoo.atari import space_invaders_v2, pong_v3, boxing_v2
+from pettingzoo.atari import space_invaders_v2, pong_v3, boxing_v2, tennis_v3
 import supersuit as ss
 import numpy as np
 import wandb
 import argparse
 import copy
-from numpy import random
 import datetime
 import os
 import random
@@ -72,6 +71,11 @@ elif args.task == "space_invaders":
     env = space_invaders_v2.parallel_env(obs_type='ram')
 elif args.task == "boxing":
     env = boxing_v2.parallel_env(obs_type='ram')
+elif args.task == "tennis":
+    env = tennis_v3.parallel_env(obs_type='ram')
+else:
+    logger.error("Environment not found!")
+    exit()
 
 env = ss.frame_skip_v0(env, 4)
 # # repeat_action_probability is set to 0.25 to introduce non-determinism to the system
@@ -81,12 +85,10 @@ env = ss.normalize_obs_v0(env)
 if args.clip_rewards:
     env = ss.clip_reward_v0(env)
 # configurations
-observe_dim = 128
+observe_dim = 128 #always this number if you work with ram
 action_num = env.action_space('first_0').n
 logger.info("action_num: {}".format(action_num))
 max_steps = 200
-solved_reward = 190
-solved_repeat = 5
 save_step = 5000
 
 
@@ -119,6 +121,7 @@ class QNet(nn.Module):
         logger.info("Layer fc2 is frozen now.")
 
 def change_agent(obs_input):
+    
     obs = np.copy(obs_input)
     if args.task == "space_invaders":
         temp = obs_input[29]
@@ -158,6 +161,20 @@ def change_agent(obs_input):
         temp = obs_input[19]
         obs[19] = obs_input[18]
         obs[18] = temp
+
+    
+    elif args.task == "tennis":
+        temp = obs_input[27]
+        obs[27] = obs_input[26]
+        obs[26] = temp
+
+        temp = obs_input[25]
+        obs[25] = obs_input[24]
+        obs[24] = temp
+
+        temp = obs_input[70]
+        obs[70] = obs_input[69]
+        obs[69] = temp
     return obs
 
 
@@ -178,7 +195,6 @@ if __name__ == "__main__":
     random.seed(args.seed)
 
     max_episodes = args.episode
-    sample_log_step = max_episodes / 10000
 
     loaded_tuple = ()
     hash_index = None
@@ -231,11 +247,10 @@ if __name__ == "__main__":
     opponent_q_net = QNet(observe_dim, action_num, args.device, args.device).double().to(args.device)
     opponent_q_net.eval()
 
-    now = datetime.datetime.now().strftime("%y%m%d-%H%M%S")
     log_path = os.path.join('.', log_name)
     Path(log_path).mkdir(parents=True, exist_ok=True) 
     dqn_per = DQNPer(q_net, q_net_t, t.optim.Adam, nn.MSELoss(reduction="sum"), batch_size = args.batch_size, epsilon_decay=args.epsilon)
-    episode, step, reward_fulfilled = 0, 0, 0
+    episode, step = 0, 0
     total_step = 0
     episode_len = 0
     total_reward = 0
@@ -301,10 +316,11 @@ if __name__ == "__main__":
                     experience
                 )
                 if args.wandb:
-                    wandb.log({"agent reward": rewards['first_0'], "timestep": total_step})
-                    wandb.log({"opponent reward": rewards['second_0'], "timestep": total_step})
+                    wandb.log({"agent reward": rewards['first_0'], "action": action1_cpu, "timestep": total_step})
+                    wandb.log({"opponent reward": rewards['second_0'], "opponent_action": action2, "timestep": total_step})
             terminal = terminations['first_0'] or truncations['first_0']
         #Things that should happen at the end of the episode
+        dqn_per.store_episode(tmp_observations)
                 # update, update more if episode is longer, else less
         if episode > 20:
             for _ in range(episode_len):
@@ -312,25 +328,22 @@ if __name__ == "__main__":
         # show reward
         #logger.info(f"Episode {episode} reward={total_reward:.2f}")
         if args.wandb:
-            wandb.log({"total_reward": total_reward, "action": action1_cpu, "episode": episode})
-            wandb.log({"total_opponent_reward": total_opponent_reward, "opponent_action": action2, "episode": episode})
+            wandb.log({"total_reward": total_reward, "episode": episode})
+            wandb.log({"total_opponent_reward": total_opponent_reward, "episode": episode})
             wandb.log({"episode len": episode_len, "episode": episode})
-        # if sample_log_step > 1:
-        #     if episode % sample_log_step == 0:
-        #         wandb.log({"total_sampled_reward": total_reward,"episode": episode})
-        #         wandb.log({"total_sampled_opponent_reward": total_opponent_reward, "episode": episode})
-        dqn_per.store_episode(tmp_observations)
+
+       
         total_reward = 0
         total_opponent_reward = 0
         episode_len = 0
     
         observations, infos = env.reset(seed=args.seed)
         state = t.tensor(observations['first_0'], dtype=t.float64)
+        observation = observations['first_0']
         tmp_observations = []
         episode += 1
 
     
-    t.save(dqn_per.qnet.state_dict(), os.path.join(log_path, "final_policy.pth"))
     t.save(q_net.state_dict(), os.path.join(log_path, "final_policy.pth"))
     t.save({
             'epoch': max_episodes,
