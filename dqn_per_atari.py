@@ -175,6 +175,9 @@ def change_agent(obs_input):
         temp = obs_input[70]
         obs[70] = obs_input[69]
         obs[69] = temp
+    else:
+        logger.error("Could not find the environment specifications.")
+        exit()
     return obs
 
 
@@ -195,7 +198,14 @@ if __name__ == "__main__":
     random.seed(args.seed)
 
     max_episodes = args.episode
+    if not args.random_opponent and not args.self_play:
+       logger.error("The opponent mode is not provided (self-play or random?)")
+       exit()
 
+    if args.random_opponent and args.self_play:
+       logger.error("The opponent mode is not provided correctly (self-play or random?)")
+       exit()
+    
     loaded_tuple = ()
     hash_index = None
     if args.count_based_exploration:
@@ -272,6 +282,7 @@ if __name__ == "__main__":
 
     while episode < max_episodes:
         if episode % save_step == 0:
+            logger.info("Save checkpoint")
             t.save(q_net.state_dict(), os.path.join(log_path, "current_policy.pth"))
             t.save({
                     'epoch': episode,
