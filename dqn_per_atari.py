@@ -121,7 +121,7 @@ class QNet(nn.Module):
         logger.info("Layer fc2 is frozen now.")
 
 def change_agent(obs_input):
-    
+
     obs = np.copy(obs_input)
     if args.task == "space_invaders":
         temp = obs_input[29]
@@ -206,22 +206,31 @@ if __name__ == "__main__":
             logger.error("You chose to use count based exploration but didn't provide a path for the hash dataset.")
             exit()
         hash_index = SimhashIndex(loaded_tuple, k=1)
-    if args.transfer_path != '':
-    #     print("No transfer path in self-play mode, abort!")
-    #     exit()
-        
-        transfer_path = args.transfer_path
+    if args.transfer:
+        if args.transfer_path != '':            
+            transfer_path = args.transfer_path
 
-        transfer_model = t.load(transfer_path, map_location=args.device)
-        transfer_model_modified = {}
-        transfer_model_copy = copy.deepcopy(transfer_model)
-        for key in transfer_model.keys():
-            if 'model' and 'fc' in key:
-                pre, middle, post = key.split('.')
-                transfer_model_modified[middle+"."+post] = transfer_model_copy.pop(key)
-        transfer_model_modified['fc3.weight'] = transfer_model_copy.pop('model.Q.0.weight')
-        transfer_model_modified['fc3.bias'] = transfer_model_copy.pop('model.Q.0.bias')
-        print("transferred bits: ", transfer_model_modified.keys())
+            transfer_model = t.load(transfer_path, map_location=args.device)
+            transfer_model_modified = {}
+            transfer_model_copy = copy.deepcopy(transfer_model)
+            for key in transfer_model.keys():
+                if 'model' and 'fc' in key and not 'old' in key:
+                    pre, middle, post = key.split('.')
+                    transfer_model_modified[middle+"."+post] = transfer_model_copy.pop(key)
+            transfer_model_modified['fc3.weight'] = transfer_model_copy.pop('model.Q.0.weight')
+            transfer_model_modified['fc3.bias'] = transfer_model_copy.pop('model.Q.0.bias')
+            print("transferred bits: ", transfer_model_modified.keys())
+            assert np.array_equal(transfer_model['model.fc1.weight'], transfer_model_modified['fc1.weight'])
+            assert np.array_equal(transfer_model['model.fc1.bias'], transfer_model_modified['fc1.bias'])
+
+            assert np.array_equal(transfer_model['model.fc2.weight'], transfer_model_modified['fc2.weight'])
+            assert np.array_equal(transfer_model['model.fc2.bias'], transfer_model_modified['fc2.bias'])
+
+            assert np.array_equal(transfer_model['model.Q.0.weight'], transfer_model_modified['fc3.weight'])
+            assert np.array_equal(transfer_model['model.Q.0.bias'], transfer_model_modified['fc3.bias'])
+        else:
+            logger.error("No transfer path provided.")
+            exit()
     if args.wandb:
         wandb_name = log_name.replace('/', '-')
         wandb.init(project="machin_transfer", entity="justkim42", name=wandb_name, config=wandb_config,     settings=wandb.Settings(
