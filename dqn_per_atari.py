@@ -18,6 +18,7 @@ import random
 from pathlib import Path
 import pickle
 from simhash import SimhashIndex
+from clearml import Task
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -30,6 +31,7 @@ def get_args():
     parser.add_argument("--episode", type=int, default=20)
     parser.add_argument("--clip-rewards", action="store_true", default=False)
     parser.add_argument("--wandb", action="store_true", default=False)
+    parser.add_argument("--clearml", action="store_true", default=False)
     parser.add_argument("--random-opponent", action="store_true", default=False)
     parser.add_argument("--self-play", action="store_true", default=False)
     parser.add_argument("--epsilon", type=float, default=0.9999985)
@@ -232,6 +234,14 @@ if __name__ == "__main__":
         wandb.init(project="machin_transfer", entity="justkim42", name=wandb_name, config=wandb_config,     settings=wandb.Settings(
         log_internal=str(Path(__file__).parent / 'wandb' / 'null'),
     ))
+    if args.clearml:
+        # Start a new task
+        clearml_name = log_name.replace('/', '-')
+        task = Task.init(project_name="machin_transfer", task_name=clearml_name)
+
+        # Get the task logger,
+        # You can also call Task.current_task().get_logger() from anywhere in your code.
+        clearml_logger = task.get_logger()
 
     q_net = QNet(observe_dim, action_num, args.device, args.device).double().to(args.device)
     q_net_t = QNet(observe_dim, action_num, args.device, args.device).double().to(args.device)
@@ -319,6 +329,7 @@ if __name__ == "__main__":
                 if args.wandb:
                     wandb.log({"agent reward": rewards['first_0'], "action": action1_cpu, "timestep": total_step})
                     wandb.log({"opponent reward": rewards['second_0'], "opponent_action": action2, "timestep": total_step})
+
             terminal = terminations['first_0'] or truncations['first_0']
         #Things that should happen at the end of the episode
         dqn_per.store_episode(tmp_observations)
@@ -332,6 +343,8 @@ if __name__ == "__main__":
             wandb.log({"total_reward": total_reward, "episode": episode})
             wandb.log({"total_opponent_reward": total_opponent_reward, "episode": episode})
             wandb.log({"episode len": episode_len, "episode": episode})
+        if args.clearml:
+            clearml_logger.report_scalar("Total Reward", "Total Reward", iteration=episode, value=total_reward)
 
        
         total_reward = 0
