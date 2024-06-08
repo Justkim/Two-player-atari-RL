@@ -320,12 +320,13 @@ if __name__ == "__main__":
                     wandb.log({"agent reward": rewards['first_0'], "action": action1_cpu, "timestep": total_step})
                     wandb.log({"opponent reward": rewards['second_0'], "opponent_action": action2, "timestep": total_step})
             terminal = terminations['first_0'] or truncations['first_0']
-        #Things that should happen at the end of the episode
-        dqn_per.store_episode(tmp_observations)
-                # update, update more if episode is longer, else less
         if episode > 20:
             for _ in range(episode_len):
                 dqn_per.update()
+        #Things that should happen at the end of the episode
+        dqn_per.store_episode(tmp_observations)
+                # update, update more if episode is longer, else less
+
         # show reward
         #logger.info(f"Episode {episode} reward={total_reward:.2f}")
         if args.wandb:
