@@ -6,7 +6,7 @@ from pathlib import Path
 import torch as t
 import torch.nn as nn
 import gym
-from pettingzoo.atari import space_invaders_v2, pong_v3, boxing_v2, tennis_v3
+from pettingzoo.atari import space_invaders_v2, pong_v3, boxing_v2, tennis_v3, surround_v2
 import supersuit as ss
 import numpy as np
 import wandb
@@ -69,6 +69,8 @@ elif args.task == "boxing":
     env = boxing_v2.parallel_env(obs_type='ram')
 elif args.task == "tennis":
     env = tennis_v3.parallel_env(obs_type='ram')
+elif args.task == "surround":
+    env = surround_v2.parallel_env(obs_type='ram')
 else:
     logger.error("Environment not found!")
     exit()
@@ -171,6 +173,19 @@ def change_agent(obs_input):
         temp = obs_input[70]
         obs[70] = obs_input[69]
         obs[69] = temp
+
+    elif args.task == "surround":
+        temp = obs_input[110]
+        obs[110] = obs_input[109]
+        obs[109] = temp
+
+        temp = obs_input[112]
+        obs[112] = obs_input[111]
+        obs[111] = temp
+
+        temp = obs_input[119]
+        obs[119] = obs_input[118]
+        obs[118] = temp
     else:
         logger.error("Could not find the environment specifications.")
         exit()
