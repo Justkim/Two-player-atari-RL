@@ -117,7 +117,18 @@ class QNet(nn.Module):
         for param in self.fc2.parameters():
                 param.requires_grad = False
         logger.info("Layer fc2 is frozen now.")
+def reset(env):
+    if args.task == "SpaceInvaders":
+        observations, infos = env.reset(env)
+        for i in range(130):
+            actions = {'first_0': 0, 'second_0': 0}
+            observations, rewards, terminations, truncations, infos = env.step(actions)
+    else:
+        observations, infos = env.reset(seed=args.seed)
+    return observations, infos
 
+
+    
 def change_agent(obs_input):
 
     obs = np.copy(obs_input)
@@ -276,7 +287,7 @@ if __name__ == "__main__":
     total_reward = 0
     total_opponent_reward = 0
     terminal = False
-    observations, infos = env.reset(seed=args.seed)
+    observations, infos = reset(env)
     state = t.tensor(observations['first_0'], dtype=t.float64)
     observation = observations['first_0']
     tmp_observations = []
@@ -356,7 +367,7 @@ if __name__ == "__main__":
         total_opponent_reward = 0
         episode_len = 0
     
-        observations, infos = env.reset(seed=args.seed)
+        observations, infos = reset(env)
         state = t.tensor(observations['first_0'], dtype=t.float64)
         tmp_observations = []
         episode += 1
