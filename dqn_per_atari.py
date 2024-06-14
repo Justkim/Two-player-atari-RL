@@ -123,6 +123,11 @@ def reset(env):
         for i in range(130):
             actions = {'first_0': 0, 'second_0': 0}
             observations, rewards, terminations, truncations, infos = env.step(actions)
+    elif args.task == "pong":
+        for i in range(60):
+            actions = {'first_0': 0, 'second_0': 0}
+            observations, rewards, terminations, truncations, infos = env.step(actions)
+        
     else:
         observations, infos = env.reset(seed=args.seed)
     return observations, infos
