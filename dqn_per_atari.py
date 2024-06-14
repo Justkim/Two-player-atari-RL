@@ -118,8 +118,8 @@ class QNet(nn.Module):
                 param.requires_grad = False
         logger.info("Layer fc2 is frozen now.")
 def reset(env):
-    if args.task == "SpaceInvaders":
-        observations, infos = env.reset(env)
+    if args.task == "space_invaders":
+        observations, infos = env.reset(seed=args.seed)
         for i in range(130):
             actions = {'first_0': 0, 'second_0': 0}
             observations, rewards, terminations, truncations, infos = env.step(actions)
