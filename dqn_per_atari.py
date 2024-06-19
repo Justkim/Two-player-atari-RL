@@ -6,7 +6,7 @@ from pathlib import Path
 import torch as t
 import torch.nn as nn
 import gym
-from pettingzoo.atari import space_invaders_v2, pong_v3, boxing_v2, tennis_v3, surround_v2
+from pettingzoo.atari import space_invaders_v2, entombed_cooperative_v3, pong_v3, boxing_v2, tennis_v3, surround_v2
 import supersuit as ss
 import numpy as np
 import wandb
@@ -295,6 +295,7 @@ if __name__ == "__main__":
     terminal = False
     observations, infos = reset(env)
     state = t.tensor(observations['first_0'], dtype=t.float64)
+    opponent_state = t.tensor(change_agent(observations['second_0']), dtype=t.float64)
     observation = observations['first_0']
     tmp_observations = []
 
@@ -316,16 +317,17 @@ if __name__ == "__main__":
                 opponent_q_net.load_state_dict(q_net.state_dict())
             with t.no_grad():
                 old_state = state
+                old_opponent_state = opponent_state
                 # agent model inference
                 action1 = dqn_per.act_discrete_with_noise({"state": old_state.view(1, observe_dim)})
                 action1_cpu = action1.cpu().numpy()[0][0]
                 if args.random_opponent:
                     action2 = env.action_space('second_0').sample()
                 elif args.self_play:
-                    opponent_observation = t.tensor(change_agent(observations['second_0']), dtype=t.float64).to(args.device)
+                    #opponent_observation = t.tensor(change_agent(observations['second_0']), dtype=t.float64).to(args.device)
                     random_number = np.random.rand()
                     if random_number > args.opponent_randomness:
-                        action2 = int(opponent_q_net.forward(opponent_observation).argmax().cpu())
+                        action2 = int(opponent_q_net.forward(old_opponent_state).argmax().cpu())
                     else:
                         random_number = random.randint(0, action_num-1)
                         action2 = random_number
@@ -335,6 +337,7 @@ if __name__ == "__main__":
                 total_step += 1
                 episode_len += 1
                 state = t.tensor(observations['first_0'], dtype=t.float64)
+                opponent_state = t.tensor(change_agent(observations['second_0']), dtype=t.float64)
                 total_reward += rewards['first_0']
                 total_opponent_reward += rewards['second_0']
 
@@ -345,6 +348,14 @@ if __name__ == "__main__":
                         "reward": rewards['first_0'],
                         "terminal": terminations['first_0'],
                     }
+                opponent_experience =  {
+                        "state": {"state": old_opponent_state.view(1, observe_dim)},
+                        "action": {"action": t.tensor(action2).to(args.device)},
+                        "next_state": {"state": opponent_state.view(1, observe_dim)},
+                        "reward": rewards['second_0'],
+                        "terminal": terminations['second_0'],
+                    }
+                
                 tmp_observations.append(
                     experience
                 )
