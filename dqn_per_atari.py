@@ -350,7 +350,7 @@ if __name__ == "__main__":
                     }
                 opponent_experience =  {
                         "state": {"state": old_opponent_state.view(1, observe_dim)},
-                        "action": {"action": t.tensor(action2).to(args.device)},
+                        "action": {"action": t.tensor([[action2]]).to(args.device)},
                         "next_state": {"state": opponent_state.view(1, observe_dim)},
                         "reward": rewards['second_0'],
                         "terminal": terminations['second_0'],
@@ -358,6 +358,9 @@ if __name__ == "__main__":
                 
                 tmp_observations.append(
                     experience
+                )
+                tmp_observations.append(
+                    opponent_experience
                 )
                 if args.wandb:
                     wandb.log({"agent reward": rewards['first_0'], "action": action1_cpu, "timestep": total_step})
