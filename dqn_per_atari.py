@@ -6,7 +6,7 @@ from pathlib import Path
 import torch as t
 import torch.nn as nn
 import gym
-from pettingzoo.atari import space_invaders_v2, pong_v3, boxing_v2, tennis_v3, surround_v2
+from pettingzoo.atari import space_invaders_v2, pong_v3, boxing_v2, tennis_v3, surround_v2, mario_bros_v3, wizard_of_wor_v3, video_checkers_v4, double_dunk_v3, flag_capture_v2, othello_v3, entombed_competitive_v3, entombed_cooperative_v3, ice_hockey_v2, double_dunk_v3
 import supersuit as ss
 import numpy as np
 import wandb
@@ -176,7 +176,6 @@ def change_agent(obs_input):
         temp = obs_input[19]
         obs[19] = obs_input[18]
         obs[18] = temp
-
     
     elif args.task == "tennis":
         temp = obs_input[27]
