@@ -6,7 +6,7 @@ from pathlib import Path
 import torch as t
 import torch.nn as nn
 import gym
-from pettingzoo.atari import space_invaders_v2, pong_v3, boxing_v2, tennis_v3, surround_v2, mario_bros_v3, wizard_of_wor_v3, video_checkers_v4, double_dunk_v3, flag_capture_v2, othello_v3, entombed_competitive_v3, entombed_cooperative_v3, ice_hockey_v2, double_dunk_v3
+from pettingzoo.atari import space_invaders_v2, pong_v3, boxing_v2, tennis_v3, surround_v2, mario_bros_v3, double_dunk_v3, flag_capture_v2, othello_v3, entombed_competitive_v3, entombed_cooperative_v3, ice_hockey_v2, double_dunk_v3
 import supersuit as ss
 import numpy as np
 import wandb
@@ -16,8 +16,7 @@ import datetime
 import os
 import random
 from pathlib import Path
-import pickle
-from simhash import SimhashIndex
+from utils.agent_indication_atari_wrapper import AgentIndicatorAtariEnv
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -71,6 +70,16 @@ elif args.task == "tennis":
     env = tennis_v3.parallel_env(obs_type='ram')
 elif args.task == "surround":
     env = surround_v2.parallel_env(obs_type='ram')
+elif args.task == "mario_bros":
+    env = mario_bros_v3.parallel_env(obs_type='ram')
+elif args.task == "flag_capture":
+    env = flag_capture_v2.parallel_env(obs_type='ram')
+elif args.task == "entombed_competitive":
+    env = entombed_competitive_v3.parallel_env(obs_type='ram')
+elif args.task == "entombed_cooperative":
+    env = entombed_cooperative_v3.parallel_env(obs_type='ram')
+elif args.task == "double_dunk":
+    env = double_dunk_v3.parallel_env(obs_type='ram')
 else:
     logger.error("Environment not found!")
     exit()
@@ -82,6 +91,8 @@ env = ss.dtype_v0(env, np.dtype("float64"))
 env = ss.normalize_obs_v0(env)
 if args.clip_rewards:
     env = ss.clip_reward_v0(env)
+
+env = AgentIndicatorAtariEnv(env)
 # configurations
 observe_dim = 128 #always this number if you work with ram
 action_num = env.action_space('first_0').n
@@ -132,81 +143,6 @@ def reset(env):
     else:
         observations, infos = env.reset(seed=args.seed)
     return observations, infos
-
-
-    
-def change_agent(obs_input):
-
-    obs = np.copy(obs_input)
-    if args.task == "space_invaders":
-        temp = obs_input[29]
-        obs[29] = obs_input[28]
-        obs[28] = temp
-
-        temp = obs_input[105]
-        obs[105] = obs_input[104]
-        obs[104] = temp
-
-        temp = obs_input[74]
-        obs[74] = obs_input[73]
-        obs[73] = temp
-
-    elif args.task == "pong":
-        temp = obs_input[51]
-        obs[51] = obs_input[50]
-        obs[50] = temp
-
-        temp = obs_input[46]
-        obs[46] = obs_input[45]
-        obs[45] = temp
-
-        temp = obs_input[14]
-        obs[14] = obs_input[13]
-        obs[13] = temp
-
-    elif args.task == "boxing":
-        temp = obs_input[33]
-        obs[33] = obs_input[32]
-        obs[32] = temp
-
-        temp = obs_input[35]
-        obs[35] = obs_input[34]
-        obs[34] = temp
-
-        temp = obs_input[19]
-        obs[19] = obs_input[18]
-        obs[18] = temp
-    
-    elif args.task == "tennis":
-        temp = obs_input[27]
-        obs[27] = obs_input[26]
-        obs[26] = temp
-
-        temp = obs_input[25]
-        obs[25] = obs_input[24]
-        obs[24] = temp
-
-        temp = obs_input[70]
-        obs[70] = obs_input[69]
-        obs[69] = temp
-
-    elif args.task == "surround":
-        temp = obs_input[110]
-        obs[110] = obs_input[109]
-        obs[109] = temp
-
-        temp = obs_input[112]
-        obs[112] = obs_input[111]
-        obs[111] = temp
-
-        temp = obs_input[119]
-        obs[119] = obs_input[118]
-        obs[118] = temp
-    else:
-        logger.error("Could not find the environment specifications.")
-        exit()
-    return obs
-
 
 
 if __name__ == "__main__":
@@ -321,7 +257,7 @@ if __name__ == "__main__":
                 if args.random_opponent:
                     action2 = env.action_space('second_0').sample()
                 elif args.self_play:
-                    opponent_observation = t.tensor(change_agent(observations['second_0']), dtype=t.float64).to(args.device)
+                    opponent_observation = t.tensor(observations['second_0'], dtype=t.float64).to(args.device)
                     random_number = np.random.rand()
                     if random_number > args.opponent_randomness:
                         action2 = int(opponent_q_net.forward(opponent_observation).argmax().cpu())
@@ -351,6 +287,8 @@ if __name__ == "__main__":
                     wandb.log({"agent reward": rewards['first_0'], "action": action1_cpu, "timestep": total_step})
                     wandb.log({"opponent reward": rewards['second_0'], "opponent_action": action2, "timestep": total_step})
             terminal = terminations['first_0'] or truncations['first_0']
+            if args.task == "mario_bros" and (terminations['second_0'] or truncations['second_0']):
+                terminal = True
         #Things that should happen at the end of the episode
         dqn_per.store_episode(tmp_observations)
 
