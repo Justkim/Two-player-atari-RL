@@ -24,7 +24,6 @@ atari_annotations = {
     player_y=[109, 110],
     player_score=[118, 119]
     ),
-    #Needs editing after
     "mario_bros_v3":  dict(    
     player_x=[44, 45],
     player_y=[42, 43],
@@ -32,18 +31,11 @@ atari_annotations = {
     score_lower_bits=[10, 12],
     player_lives=[7, 8]
     ),
-    "wizard_of_wor_v3":  dict(    
-    player_x=[54, 55],
-    player_score=[5, 6]
-    ),
-    "video_checkers_v4":  dict(    
-
-    ),
     "double_dunk_v3":  dict(    
     outside_player_x=[39, 40],
     inside_player_x=[37, 38],
     outside_player_y=[35, 36],
-    inside_player_y=[33, 34]
+    inside_player_y=[33, 34],
     player_score=[118, 119]
     ),
     "flag_capture_v2":  dict(    
@@ -51,32 +43,23 @@ atari_annotations = {
     player_y=[2, 3],
     player_score=[106, 107]
     ),
-    "othello_v3":  dict(    
-    turn=[64] #01=1, FF=255 #add to code
-    ),    
     "entombed_competitive_v3":  dict(    
     player_x=[50, 51],
     player_y=[48, 49],
-    lives_bits=[71] #code,
+    lives_bits=[71], #code,
     player_potion=[98, 99]
    
     ),
     "entombed_cooperative_v3":  dict(     #The same as the above game
     player_x=[50, 51],
     player_y=[48, 49],
-    lives_bits=[71] #code,
+    lives_bits=[71], #code,
     player_potion=[98, 99]
    
     ),
-    "ice_hockey_v2":  dict(    
-
-    ),
-    "space_war":  dict(    
-
-    )
 
     
     
 
 
-    }
+}
