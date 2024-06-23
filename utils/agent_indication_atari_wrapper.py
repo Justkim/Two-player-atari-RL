@@ -53,6 +53,7 @@ class AgentIndicatorAtariEnv(BaseParallelWrapper):
             tuple[dict[AgentID, ObsType], dict[AgentID, dict]]:
         """
         obs, info = super().reset(seed=seed, options=options)
+        value = obs['second_0'][71]
         obs['second_0'] = self.change_observation(obs['second_0'])
         return obs, info
 
@@ -86,12 +87,22 @@ class AgentIndicatorAtariEnv(BaseParallelWrapper):
         obs, rew, term, trunc, info = super().step(actions)
         obs['second_0'] = self.change_observation(obs['second_0'])
         return obs, rew, term, trunc, info
-    
+    def swap_four_bits(self, value):
+        high_4_bits = value >> 4
+        low_4_bits = value & 0x0F
+
+        # Swap the bits
+        swapped_value = (low_4_bits << 4) | high_4_bits
+        return swapped_value
 
     def change_observation(self, obs_input):
         obs = np.copy(obs_input)
         for pair in self.list_of_pairs:
-            temp = obs_input[pair[1]]
-            obs[pair[1]] = obs_input[pair[0]]
-            obs[pair[0]] = temp
+            if len(pair) == 1 and 'entombed' in self.env_name: # Swap the bits for number of lives in entombed
+                obs[pair[0]] = self.swap_four_bits(obs_input[pair[0]])
+            else:
+                # Swap the two values
+                temp = obs_input[pair[1]]
+                obs[pair[1]] = obs_input[pair[0]]
+                obs[pair[0]] = temp
         return obs

@@ -87,12 +87,13 @@ else:
 env = ss.frame_skip_v0(env, 4)
 # # repeat_action_probability is set to 0.25 to introduce non-determinism to the system
 env = ss.sticky_actions_v0(env, repeat_action_probability=0.25)
+env = AgentIndicatorAtariEnv(env)
 env = ss.dtype_v0(env, np.dtype("float64"))
 env = ss.normalize_obs_v0(env)
 if args.clip_rewards:
     env = ss.clip_reward_v0(env)
 
-env = AgentIndicatorAtariEnv(env)
+
 # configurations
 observe_dim = 128 #always this number if you work with ram
 action_num = env.action_space('first_0').n
