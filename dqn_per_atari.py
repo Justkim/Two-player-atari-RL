@@ -6,7 +6,7 @@ from pathlib import Path
 import torch as t
 import torch.nn as nn
 import gym
-from pettingzoo.atari import space_invaders_v2, pong_v3, boxing_v2, tennis_v3, surround_v2, mario_bros_v3, double_dunk_v3, flag_capture_v2, othello_v3, entombed_competitive_v3, entombed_cooperative_v3, ice_hockey_v2, double_dunk_v3
+from pettingzoo.atari import space_invaders_v2, pong_v3, boxing_v2, tennis_v3, surround_v2, mario_bros_v3, double_dunk_v3, flag_capture_v2, othello_v3, entombed_competitive_v3, entombed_cooperative_v3, ice_hockey_v2, double_dunk_v3, flag_capture_v2
 import supersuit as ss
 import numpy as np
 import wandb
@@ -73,7 +73,7 @@ elif args.task == "surround":
 elif args.task == "mario_bros":
     env = mario_bros_v3.parallel_env(obs_type='ram')
 elif args.task == "flag_capture":
-    env = flag_capture_v2.parallel_env(obs_type='ram')
+    env = flag_capture_v2.parallel_env(obs_type='ram', full_action_space=True)
 elif args.task == "entombed_competitive":
     env = entombed_competitive_v3.parallel_env(obs_type='ram')
 elif args.task == "entombed_cooperative":
