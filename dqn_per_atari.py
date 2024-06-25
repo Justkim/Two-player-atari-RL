@@ -37,7 +37,7 @@ def get_args():
     parser.add_argument("--transfer", action="store_true", default=False)
     parser.add_argument("--freeze-first-layer", action="store_true", default=False)
     parser.add_argument("--freeze-two-layer", action="store_true", default=False)
-    parser.add_argument("--opponent-experience-store", action="store_true", default=False)
+    parser.add_argument("--opponent-train", action="store_true", default=False)
     return parser.parse_args()
 
 def log_args():
@@ -57,7 +57,7 @@ def log_args():
     logger.info("clip-rewards: {}".format(args.clip_rewards))
     logger.info("freeze-first-layer: {}".format(args.freeze_first_layer))
     logger.info("freeze-two-layer: {}".format(args.freeze_two_layer))
-    logger.info("opponent-experience-store: {}".format(args.opponent_experiance_store))
+    logger.info("opponent-train: {}".format(args.opponent_train))
 
 
 args = get_args()
@@ -288,7 +288,7 @@ if __name__ == "__main__":
                 tmp_observations.append(
                     experience
                 )
-                if args.opponent_experience_store:
+                if args.opponent_train:
                     opponent_experience =  {
                         "state": {"state": old_opponent_state.view(1, observe_dim)},
                         "action": {"action": t.tensor([[action2]]).to(args.device)},
