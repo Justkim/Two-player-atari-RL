@@ -37,6 +37,7 @@ def get_args():
     parser.add_argument("--transfer", action="store_true", default=False)
     parser.add_argument("--freeze-first-layer", action="store_true", default=False)
     parser.add_argument("--freeze-two-layer", action="store_true", default=False)
+    parser.add_argument("--opponent-experiance-store", action="store_true", default=False)
     return parser.parse_args()
 
 def log_args():
@@ -56,6 +57,7 @@ def log_args():
     logger.info("clip-rewards: {}".format(args.clip_rewards))
     logger.info("freeze-first-layer: {}".format(args.freeze_first_layer))
     logger.info("freeze-two-layer: {}".format(args.freeze_two_layer))
+    logger.info("opponent-experiance-store: {}".format(args.opponent_experiance_store))
 
 
 args = get_args()
@@ -231,6 +233,7 @@ if __name__ == "__main__":
     terminal = False
     observations, infos = reset(env)
     state = t.tensor(observations['first_0'], dtype=t.float64)
+    opponent_state = t.tensor(observations['second_0'], dtype=t.float64)
     observation = observations['first_0']
     tmp_observations = []
 
@@ -252,16 +255,16 @@ if __name__ == "__main__":
                 opponent_q_net.load_state_dict(q_net.state_dict())
             with t.no_grad():
                 old_state = state
+                old_opponent_state = opponent_state
                 # agent model inference
                 action1 = dqn_per.act_discrete_with_noise({"state": old_state.view(1, observe_dim)})
                 action1_cpu = action1.cpu().numpy()[0][0]
                 if args.random_opponent:
                     action2 = env.action_space('second_0').sample()
                 elif args.self_play:
-                    opponent_observation = t.tensor(observations['second_0'], dtype=t.float64).to(args.device)
                     random_number = np.random.rand()
                     if random_number > args.opponent_randomness:
-                        action2 = int(opponent_q_net.forward(opponent_observation).argmax().cpu())
+                        action2 = int(opponent_q_net.forward(old_opponent_state).argmax().cpu())
                     else:
                         random_number = random.randint(0, action_num-1)
                         action2 = random_number
@@ -271,6 +274,7 @@ if __name__ == "__main__":
                 total_step += 1
                 episode_len += 1
                 state = t.tensor(observations['first_0'], dtype=t.float64)
+                opponent_state = t.tensor(observations['second_0'], dtype=t.float64)
                 total_reward += rewards['first_0']
                 total_opponent_reward += rewards['second_0']
 
@@ -284,6 +288,19 @@ if __name__ == "__main__":
                 tmp_observations.append(
                     experience
                 )
+                if args.opponent_experience_store:
+                    opponent_experience =  {
+                        "state": {"state": old_opponent_state.view(1, observe_dim)},
+                        "action": {"action": t.tensor([[action2]]).to(args.device)},
+                        "next_state": {"state": opponent_state.view(1, observe_dim)},
+                        "reward": rewards['second_0'],
+                        "terminal": terminations['second_0'],
+                    }
+
+                    tmp_observations.append(
+                    opponent_experience
+                )
+
                 if args.wandb:
                     wandb.log({"agent reward": rewards['first_0'], "action": action1_cpu, "timestep": total_step})
                     wandb.log({"opponent reward": rewards['second_0'], "opponent_action": action2, "timestep": total_step})
@@ -313,6 +330,7 @@ if __name__ == "__main__":
     
         observations, infos = reset(env)
         state = t.tensor(observations['first_0'], dtype=t.float64)
+        opponent_state = t.tensor(observations['second_0'], dtype=t.float64)
         tmp_observations = []
         episode += 1
 
