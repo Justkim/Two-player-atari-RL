@@ -14,22 +14,62 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
-from pettingzoo.atari import pong_v3
+from pettingzoo.atari import pong_v3, double_dunk_v3, flag_capture_v2, entombed_cooperative_v3, entombed_competitive_v3, tennis_v3, space_invaders_v2, mario_bros_v3, surround_v2, boxing_v2
 from tqdm import tqdm
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    np.random.seed(99)
+    random.seed(99)
     parser.add_argument("--num-player", type=int, default=1)
     parser.add_argument("--task-name", type=str, default='')
     args = parser.parse_args()
     if args.num_player == 1:
         if args.task_name == "pong":
             env1 = gym.make('Pong-ramNoFrameskip-v4')
+        elif args.task_name == "space_invaders":
+            env1 = gym.make('SpaceInvaders-ramNoFrameskip-v4')
+        elif args.task_name == "mario_bros":
+            env1 = gym.make('ALE/MarioBros-ram-v5')
+        elif args.task_name == "surround":
+            env1 = gym.make('ALE/Surround-ram-v5')
+        elif args.task_name == "tennis":
+            env1 = gym.make('Tennis-ramNoFrameskip-v4')
+        elif args.task_name == "double_dunk":
+            env1 = gym.make('DoubleDunk-ramNoFrameskip-v4')
+        elif args.task_name == "entombed":
+            env1 = gym.make('ALE/Entombed-ram-v5')
+        elif args.task_name == "boxing":
+            env1 = gym.make('Boxing-ramNoFrameskip-v4')
+        elif args.task_name == "flag_capture":
+            env1 = gym.make('ALE/FlagCapture-ram-v5')
+
+
+
         else:
             exit()
     elif args.num_player == 2:
         if args.task_name == "pong":
             env2 = pong_v3.parallel_env(obs_type='ram')
+        elif args.task_name == "space_invaders":
+            env2 = space_invaders_v2.parallel_env(obs_type='ram')
+        elif args.task_name == "boxing":
+            env2 = boxing_v2.parallel_env(obs_type='ram')
+        elif args.task_name == "tennis":
+            env2 = tennis_v3.parallel_env(obs_type='ram')
+        elif args.task_name == "surround":
+            env2 = surround_v2.parallel_env(obs_type='ram')
+        elif args.task_name == "mario_bros":
+            env2 = mario_bros_v3.parallel_env(obs_type='ram')
+        elif args.task_name == "flag_capture":
+            env2 = flag_capture_v2.parallel_env(obs_type='ram', full_action_space=True)
+        elif args.task_name == "entombed_competitive":
+            env2 = entombed_competitive_v3.parallel_env(obs_type='ram')
+        elif args.task_name == "entombed_cooperative":
+            env2 = entombed_cooperative_v3.parallel_env(obs_type='ram')
+        elif args.task_name == "double_dunk":
+            env2 = double_dunk_v3.parallel_env(obs_type='ram')
+        
         else:
             exit()
 
