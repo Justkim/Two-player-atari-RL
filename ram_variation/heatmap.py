@@ -6,21 +6,17 @@ import argparse
 
 
 def load(dataset_name):
-    data_loaded = np.load('ram_datasets/{}_player_dataset_{}.npz'.format(dataset_name,args.task_name))
+    data_loaded = np.load('../ram_datasets/{}_player_dataset_{}.npz'.format(dataset_name,args.task_name))
     dataset_loaded = data_loaded['dataset']
     return dataset_loaded
 
 def calculate_temporal_variance(dataset_loaded):
 
     variance = average_calc(dataset_loaded, dataset_loaded.shape[0], kernel_size=11)
-    variance = np.reshape(variance, (32, 4))
+    
     return variance
 
 def single_byte_average_calc(data, x, kernel_size):
-    sum = 0
-    # for y in range(kernel_size):
-    #     sum += data[x + y][i]
-    # return sum / kernel_size
     sum_values = np.sum(data[x:x+kernel_size], axis=0)
     return sum_values / kernel_size
 
@@ -59,17 +55,33 @@ if args.num_player == 0:
         ferrors = np.clip(np.abs(one_variance - two_variance), a_min = 0, a_max = 500)
     else:
         ferrors = np.abs(one_variance - two_variance)
+    byte_diff = 0
+    print(one_variance.shape)
+    print(two_variance.shape)
+    for i in range(128):
+        if (one_variance[i] == 0 and two_variance[i] != 0) or (one_variance[i] != 0 and two_variance[i] == 0):
+            byte_diff += 1
+    ferrors = np.reshape(ferrors, (32, 4))
     plt.imshow(ferrors, cmap='hot')
+
     print(args.num_player, args.task_name, np.sum(ferrors)/128)
-    plt.savefig("heatmaps/" + args.task_name + str(args.clip) + "_error_heatmap.png")
+    print("byte diff", byte_diff)
+
+    # plt.savefig("heatmaps/" + args.task_name + str(args.clip) + "_error_heatmap.png")
 if args.num_player == 1:
+    one_variance = np.reshape(one_variance, (32, 4))
     plt.imshow(one_variance, cmap='hot')
     print(args.num_player, args.task_name, np.sum(one_variance)/128)
-    plt.savefig("heatmaps/" + args.task_name + "_ram_one_heatmap.png")
+    # plt.savefig("heatmaps/" + args.task_name + "_ram_one_heatmap.png")
 if args.num_player == 2:
-    print("-------------------")
     print(args.num_player, args.task_name, np.sum(two_variance)/128)
+    # if args.clip:
+    #     two_variance = np.clip(two_variance, a_min = 0, a_max = 500)
     # two_variance = (two_variance-np.min(two_variance))/(np.max(two_variance)-np.min(two_variance)) 
     # print(two_variance)
+    two_variance = np.clip(two_variance, None, 3000)
+    two_variance = np.reshape(two_variance, (16, 8))
     plt.imshow(two_variance, cmap='hot')
-    plt.savefig("heatmaps/" + args.task_name + "_ram_two_heatmap.png")
+    plt.savefig("../heatmaps/modified_two_player/" + args.task_name + "_ram_two_heatmap.png",  transparent=True)
+
+print("------")
