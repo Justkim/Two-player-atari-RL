@@ -15,10 +15,10 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
-from utils.agent_indication_atari_wrapper import AgentIndicatorAtariEnv
 from pettingzoo.atari import pong_v3, double_dunk_v3, flag_capture_v2, entombed_cooperative_v3, entombed_competitive_v3, tennis_v3, space_invaders_v2, mario_bros_v3, surround_v2, boxing_v2
 from tqdm import tqdm
 from atari_wrapper import make_atari_env
+
 
 
 def reset(env):
@@ -128,13 +128,15 @@ if __name__ == "__main__":
         if args.num_player == 1:
             action1 = env1.action_space.sample()
             observation1, rew1, done, _, _ = env1.step(action1)
+            inner_step += 1
             if done:
                 env1.reset(seed=99)
+                inner_step = 0
             batch.append(observation1)
         elif args.num_player == 2:
             action2 =   {'first_0': env2.action_space('first_0').sample(), 'second_0': env2.action_space('second_0').sample()}
             observation2, rew2, term, trunc, _ = env2.step(action2)
-            observation2 = observation2["second_0"]
+            observation2 = observation2["first_0"]
             inner_step += 1
             if term['first_0'] or trunc['first_0'] or inner_step >= 200:
                 reset(env2)
@@ -142,9 +144,6 @@ if __name__ == "__main__":
             batch.append(observation2)
     batch_array = np.array(batch)
     if args.num_player == 1:
-        np.savez('ram_datasets/one_player_dataset_{}.npz'.format(args.task), dataset=batch_array)
+        np.savez('../ram_datasets/one_player_dataset_{}.npz'.format(args.task), dataset=batch_array)
     elif args.num_player == 2:
-        np.savez('ram_datasets/two_player_dataset_{}.npz'.format(args.task), dataset=batch_array)
-    # data_loaded = np.load('one_player_dataset_{}.npz'.format(args.task_name))
-    # large_board_dataset_loaded = data_loaded['big_dataset']
-    # print(large_board_dataset_loaded.shape)
+        np.savez('../ram_datasets/two_player_dataset_{}.npz'.format(args.task), dataset=batch_array)
