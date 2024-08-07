@@ -38,6 +38,7 @@ def get_args():
     parser.add_argument("--freeze-first-layer", action="store_true", default=False)
     parser.add_argument("--freeze-two-layer", action="store_true", default=False)
     parser.add_argument("--opponent-train", action="store_true", default=False)
+    parser.add_argument("--no-agent-indication", action="store_true", default=False)
     return parser.parse_args()
 
 def log_args():
@@ -58,6 +59,7 @@ def log_args():
     logger.info("freeze-first-layer: {}".format(args.freeze_first_layer))
     logger.info("freeze-two-layer: {}".format(args.freeze_two_layer))
     logger.info("opponent-train: {}".format(args.opponent_train))
+    logger.info("no-agent-indication: {}".format(args.no_agent_indication))
 
 
 args = get_args()
@@ -89,7 +91,9 @@ else:
 env = ss.frame_skip_v0(env, 4)
 # # repeat_action_probability is set to 0.25 to introduce non-determinism to the system
 env = ss.sticky_actions_v0(env, repeat_action_probability=0.25)
-env = AgentIndicatorAtariEnv(env)
+if not args.no_agent_indication:
+    print("indication on")
+    env = AgentIndicatorAtariEnv(env)
 env = ss.dtype_v0(env, np.dtype("float64"))
 env = ss.normalize_obs_v0(env)
 if args.clip_rewards:
