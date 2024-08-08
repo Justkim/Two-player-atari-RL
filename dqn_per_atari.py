@@ -210,9 +210,9 @@ if __name__ == "__main__":
             logger.error("No transfer path provided.")
             exit()
         if args.agent_indication_mode == 1:
-            logger.log("adding extra dimentsions to the transfer model")
+            print("adding extra dimentsions to the transfer model")
             transfer_model_modified['fc1.weight'] = t.cat((transfer_model_modified['fc1.weight'], t.randn(2, 512)), 0)
-            logger.log(transfer_model_modified['fc1.weight'].shape)
+            print(transfer_model_modified['fc1.weight'].shape)
     if args.wandb:
         wandb_name = log_name.replace('/', '-')
         wandb.init(project="machin_transfer", entity="justkim42", name=wandb_name, config=wandb_config, settings=wandb.Settings(
