@@ -17,6 +17,7 @@ import os
 import random
 from pathlib import Path
 from utils.agent_indication_atari_wrapper import AgentIndicatorAtariEnv
+from supersuit import agent_indicator_v0
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -38,7 +39,7 @@ def get_args():
     parser.add_argument("--freeze-first-layer", action="store_true", default=False)
     parser.add_argument("--freeze-two-layer", action="store_true", default=False)
     parser.add_argument("--opponent-train", action="store_true", default=False)
-    parser.add_argument("--no-agent-indication", action="store_true", default=False)
+    parser.add_argument("--agent-indication-mode", type=int, default=2)
     return parser.parse_args()
 
 def log_args():
@@ -59,7 +60,7 @@ def log_args():
     logger.info("freeze-first-layer: {}".format(args.freeze_first_layer))
     logger.info("freeze-two-layer: {}".format(args.freeze_two_layer))
     logger.info("opponent-train: {}".format(args.opponent_train))
-    logger.info("no-agent-indication: {}".format(args.no_agent_indication))
+    logger.info("agent-indication-mode: {}".format(args.agent_indication_mode))
 
 
 args = get_args()
@@ -91,17 +92,24 @@ else:
 env = ss.frame_skip_v0(env, 4)
 # # repeat_action_probability is set to 0.25 to introduce non-determinism to the system
 env = ss.sticky_actions_v0(env, repeat_action_probability=0.25)
-if not args.no_agent_indication:
-    print("indication on")
+if args.agent_indication_mode == 1:
+    print("turn indication on")
+    env = agent_indicator_v0(env)
+if args.agent_indication_mode == 2:
+    print("custom indication on")
     env = AgentIndicatorAtariEnv(env)
 env = ss.dtype_v0(env, np.dtype("float64"))
 env = ss.normalize_obs_v0(env)
 if args.clip_rewards:
     env = ss.clip_reward_v0(env)
+    
 
 
 # configurations
-observe_dim = 128 #always this number if you work with ram
+if args.agent_indication_mode == 1:
+    observe_dim = 130
+else:
+    observe_dim = 128 #always this number if you work with ram
 action_num = env.action_space('first_0').n
 logger.info("action_num: {}".format(action_num))
 max_steps = 200
