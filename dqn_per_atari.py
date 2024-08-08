@@ -210,9 +210,9 @@ if __name__ == "__main__":
             logger.error("No transfer path provided.")
             exit()
         if args.agent_indication_mode == 1:
-            print("adding extra dimentsions to the transfer model")
-            transfer_model_modified['fc1.weight'] = t.cat((transfer_model_modified['fc1.weight'], t.randn(2, 512)), 0)
-            print(transfer_model_modified['fc1.weight'].shape)
+            logger.info("adding extra dimentsions to the transfer model")
+            transfer_model_modified['fc1.weight'] = t.cat((transfer_model_modified['fc1.weight'], t.randn(512, 2)), 1)
+            logger.info(transfer_model_modified['fc1.weight'].shape)
     if args.wandb:
         wandb_name = log_name.replace('/', '-')
         wandb.init(project="machin_transfer", entity="justkim42", name=wandb_name, config=wandb_config, settings=wandb.Settings(
@@ -337,6 +337,8 @@ if __name__ == "__main__":
         if args.wandb:
             wandb.log({"total_reward": total_reward, "episode": episode})
             wandb.log({"total_opponent_reward": total_opponent_reward, "episode": episode})
+            wandb.log({"total_sum_reward": total_reward + total_opponent_reward, "episode": episode})
+            wandb.log({"total_diff_reward": total_reward - total_opponent_reward, "episode": episode})
             wandb.log({"episode len": episode_len, "episode": episode})
 
        
