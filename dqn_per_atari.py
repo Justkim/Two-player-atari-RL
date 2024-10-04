@@ -40,6 +40,7 @@ def get_args():
     parser.add_argument("--freeze-two-layer", action="store_true", default=False)
     parser.add_argument("--opponent-train", action="store_true", default=False)
     parser.add_argument("--agent-indication-mode", type=int, default=2)
+    parser.add_argument("--learning-rate", type=float, default=0.001)
     return parser.parse_args()
 
 def log_args():
@@ -240,7 +241,7 @@ if __name__ == "__main__":
 
     log_path = os.path.join('.', log_name)
     Path(log_path).mkdir(parents=True, exist_ok=True) 
-    dqn_per = DQNPer(q_net, q_net_t, t.optim.Adam, nn.MSELoss(reduction="sum"), batch_size = args.batch_size, epsilon_decay=args.epsilon)
+    dqn_per = DQNPer(q_net, q_net_t, t.optim.Adam, nn.MSELoss(reduction="sum"), batch_size = args.batch_size, epsilon_decay=args.epsilon, learning_rate=args.learning_rate)
     episode, step = 0, 0
     total_step = 0
     episode_len = 0
