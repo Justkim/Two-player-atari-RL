@@ -13,6 +13,7 @@ import wandb
 import argparse
 import copy
 import datetime
+import cv2
 import os
 import random
 from pathlib import Path
@@ -154,17 +155,21 @@ def reset(env):
         for i in range(60):
             actions = {'first_0': 0, 'second_0': 0}
             observations, rewards, terminations, truncations, infos = env.step(actions)
-        
-    else:
+    elif "entombed" in args.task:
         observations, infos = env.reset(seed=args.seed)
-    return observations, infos
+        player_2_start_point = 135/255
+        while player_2_start_point > (77/255): #77
+            actions = {'first_0': 0, 'second_0': 4}
+            observations, rewards, terminations, truncations, infos = env.step(actions)
+            player_2_start_point = observations['second_0'][50]
 
+    return observations, infos
 
 if __name__ == "__main__":
     args = get_args()
     wandb_config = args.__dict__
     log_args()
-
+    player_2_position = 77/255
     now = datetime.datetime.now().strftime("%y%m%d-%H%M%S")
     if args.transfer:
         log_name = os.path.join(args.task, 'dqn_per', 'transfer', str(args.seed), now)
@@ -284,9 +289,23 @@ if __name__ == "__main__":
                     else:
                         random_number = random.randint(0, action_num-1)
                         action2 = random_number
-                actions = {'first_0':action1_cpu, 'second_0':action2}
+
                 # take an step
+                if "entombed" in args.task:
+                    if action2 == 3 or action2 == 6 or action2 == 8:
+                        if  player_2_position >= 107/255:
+                            if action2 == 3:
+                                action2 = 0
+                            elif action2 == 6:
+                                action2 = 2
+                            elif action2 == 8:
+                                action2 = 5
+                actions = {'first_0':action1_cpu, 'second_0':action2}
                 observations, rewards, terminations, truncations, infos = env.step(actions)
+                # rgb_array = env.render()
+                # cv2.imshow('frame', rgb_array)
+                # cv2.waitKey(20)
+                player_2_position = observations['second_0'][50]
                 total_step += 1
                 episode_len += 1
                 state = t.tensor(observations['first_0'], dtype=t.float64)
