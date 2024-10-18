@@ -168,7 +168,9 @@ if __name__ == "__main__":
     args = get_args()
     wandb_config = args.__dict__
     log_args()
+
     player_2_position = 77/255
+    player_1_position = 17/255
     now = datetime.datetime.now().strftime("%y%m%d-%H%M%S")
     if args.transfer:
         log_name = os.path.join(args.task, 'dqn_per', 'transfer', str(args.seed), now)
@@ -291,20 +293,29 @@ if __name__ == "__main__":
 
                 # take an step
                 if "entombed" in args.task:
-                    if action2 == 3 or action2 == 6 or action2 == 8:
-                        if  player_2_position >= 107/255:
-                            if action2 == 3:
-                                action2 = 0
-                            elif action2 == 6:
-                                action2 = 2
-                            elif action2 == 8:
-                                action2 = 5
+                    if  player_2_position >= 107/255:
+                        if action2 == 3 or action2 == 6 or action2 == 8:
+                                if action2 == 3:
+                                    action2 = 0
+                                elif action2 == 6:
+                                    action2 = 2
+                                elif action2 == 8:
+                                    action2 = 5
+                    if  player_1_position >= 107/255:
+                        if action1_cpu == 3 or action1_cpu == 6 or action1_cpu == 8:
+                            if action1_cpu == 3:
+                                action1_cpu = 0
+                            elif action1_cpu == 6:
+                                action1_cpu = 2
+                            elif action1_cpu == 8:
+                                action1_cpu = 5
                 actions = {'first_0':action1_cpu, 'second_0':action2}
                 observations, rewards, terminations, truncations, infos = env.step(actions)
                 # rgb_array = env.render()
                 # cv2.imshow('frame', rgb_array)
                 # cv2.waitKey(20)
                 player_2_position = observations['second_0'][50]
+                player_1_position = observations['second_0'][51]
                 total_step += 1
                 episode_len += 1
                 state = t.tensor(observations['first_0'], dtype=t.float64)
